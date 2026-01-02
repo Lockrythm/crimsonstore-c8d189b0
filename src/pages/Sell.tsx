@@ -1,28 +1,39 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Upload, DollarSign, Tag, FileText, Image } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { categories } from "@/data/mockData";
+import { useCategories } from "@/hooks/useCategories";
+import { useCreateProduct } from "@/hooks/useProducts";
+import { uploadProductImage } from "@/lib/storage";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 const Sell = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { data: categories = [] } = useCategories();
+  const createProduct = useCreateProduct();
+  
   const [formData, setFormData] = useState({
     title: "",
     price: "",
     category: "",
     description: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -33,20 +44,81 @@ const Sell = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to list an item.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    if (!formData.title || !formData.price || !formData.category || !formData.description) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Item sent to the Coven",
-      description: "Your listing is pending approval from the elders.",
-    });
-    
-    setFormData({ title: "", price: "", category: "", description: "" });
-    setImagePreview(null);
-    setIsSubmitting(false);
+    try {
+      let imageUrl = '';
+      
+      if (imageFile) {
+        imageUrl = await uploadProductImage(imageFile, user.id);
+      }
+      
+      await createProduct.mutateAsync({
+        seller_id: user.id,
+        category_id: formData.category,
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        image_url: imageUrl,
+      });
+      
+      toast({
+        title: "Item sent to the Coven",
+        description: "Your listing is pending approval from the elders.",
+      });
+      
+      setFormData({ title: "", price: "", category: "", description: "" });
+      setImagePreview(null);
+      setImageFile(null);
+    } catch (error: any) {
+      toast({
+        title: "Failed to create listing",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (!authLoading && !user) {
+    return (
+      <AppLayout>
+        <div className="p-4 space-y-6 flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-2xl font-gothic text-foreground">Sign in to Sell</h1>
+          <p className="text-muted-foreground text-center">
+            You need to be signed in to list items for sale.
+          </p>
+          <Button 
+            onClick={() => navigate("/auth")}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-crimson-glow"
+          >
+            Sign In
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

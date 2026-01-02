@@ -1,47 +1,154 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect } from "react";
 import { Shield, Check, X, Trash2, Eye, ChevronLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { products as initialProducts, Product } from "@/data/mockData";
+import { usePendingProducts, useAllApprovedProducts, useUpdateProductStatus, useDeleteProduct, ProductWithSeller } from "@/hooks/useProducts";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Admin = () => {
   const { toast } = useToast();
-  const [productList, setProductList] = useState<Product[]>(initialProducts);
+  const navigate = useNavigate();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  
+  const { data: pendingProducts = [], isLoading: loadingPending } = usePendingProducts();
+  const { data: allProducts = [], isLoading: loadingAll } = useAllApprovedProducts();
+  const updateStatus = useUpdateProductStatus();
+  const deleteProduct = useDeleteProduct();
 
-  const pendingProducts = productList.filter(p => p.status === "pending");
-  const allProducts = productList.filter(p => p.status === "approved");
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      navigate("/");
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
-  const handleApprove = (id: string) => {
-    setProductList(prev => 
-      prev.map(p => p.id === id ? { ...p, status: "approved" as const } : p)
+  const handleApprove = async (id: string) => {
+    try {
+      await updateStatus.mutateAsync({ id, status: 'approved' });
+      toast({
+        title: "Item Approved",
+        description: "The item is now visible in the marketplace.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to approve",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await updateStatus.mutateAsync({ id, status: 'rejected' });
+      toast({
+        title: "Item Rejected",
+        description: "The seller will be notified.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to reject",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProduct.mutateAsync(id);
+      toast({
+        title: "Item Deleted",
+        description: "The item has been removed from the marketplace.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <AppLayout hideNav>
+        <div className="p-4 space-y-6">
+          <Skeleton className="h-8 w-48 bg-card" />
+          <Skeleton className="h-64 w-full bg-card" />
+        </div>
+      </AppLayout>
     );
-    toast({
-      title: "Item Approved",
-      description: "The item is now visible in the marketplace.",
-    });
-  };
+  }
 
-  const handleReject = (id: string) => {
-    setProductList(prev => 
-      prev.map(p => p.id === id ? { ...p, status: "rejected" as const } : p)
-    );
-    toast({
-      title: "Item Rejected",
-      description: "The seller will be notified.",
-    });
-  };
+  if (!user || !isAdmin) {
+    return null;
+  }
 
-  const handleDelete = (id: string) => {
-    setProductList(prev => prev.filter(p => p.id !== id));
-    toast({
-      title: "Item Deleted",
-      description: "The item has been removed from the marketplace.",
-    });
-  };
+  const ProductItem = ({ product, showActions }: { product: ProductWithSeller; showActions: boolean }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="card-gothic p-4"
+    >
+      <div className="flex gap-4">
+        <img 
+          src={product.image_url || '/placeholder.svg'} 
+          alt={product.title}
+          className="w-20 h-20 rounded-lg object-cover"
+        />
+        <div className="flex-1">
+          <h3 className="font-medium text-foreground">{product.title}</h3>
+          <p className="text-sm text-muted-foreground">${Number(product.price).toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground mt-1">by {product.profiles?.username || 'Unknown'}</p>
+        </div>
+      </div>
+      {showActions ? (
+        <div className="flex gap-2 mt-4">
+          <Button 
+            onClick={() => handleApprove(product.id)}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            disabled={updateStatus.isPending}
+          >
+            <Check size={18} className="mr-1" />
+            Approve
+          </Button>
+          <Button 
+            onClick={() => handleReject(product.id)}
+            variant="outline"
+            className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-white"
+            disabled={updateStatus.isPending}
+          >
+            <X size={18} className="mr-1" />
+            Reject
+          </Button>
+        </div>
+      ) : (
+        <div className="flex justify-end gap-2 mt-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Eye size={18} />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => handleDelete(product.id)}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            disabled={deleteProduct.isPending}
+          >
+            <Trash2 size={18} />
+          </Button>
+        </div>
+      )}
+    </motion.div>
+  );
 
   return (
     <AppLayout hideNav>
@@ -82,7 +189,11 @@ const Admin = () => {
 
           {/* Pending Items */}
           <TabsContent value="pending" className="mt-4 space-y-3">
-            {pendingProducts.length === 0 ? (
+            {loadingPending ? (
+              Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-32 w-full bg-card" />
+              ))
+            ) : pendingProducts.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -91,88 +202,23 @@ const Admin = () => {
                 <p>No items awaiting approval.</p>
               </motion.div>
             ) : (
-              pendingProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * index }}
-                  className="card-gothic p-4"
-                >
-                  <div className="flex gap-4">
-                    <img 
-                      src={product.imageUrl} 
-                      alt={product.title}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground">{product.title}</h3>
-                      <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">by {product.sellerName}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button 
-                      onClick={() => handleApprove(product.id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Check size={18} className="mr-1" />
-                      Approve
-                    </Button>
-                    <Button 
-                      onClick={() => handleReject(product.id)}
-                      variant="outline"
-                      className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-white"
-                    >
-                      <X size={18} className="mr-1" />
-                      Reject
-                    </Button>
-                  </div>
-                </motion.div>
+              pendingProducts.map((product) => (
+                <ProductItem key={product.id} product={product} showActions />
               ))
             )}
           </TabsContent>
 
           {/* Inventory */}
           <TabsContent value="inventory" className="mt-4 space-y-3">
-            {allProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.03 * index }}
-                className="card-gothic p-4"
-              >
-                <div className="flex gap-4 items-center">
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.title}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground text-sm">{product.title}</h3>
-                    <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Eye size={18} />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleDelete(product.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            {loadingAll ? (
+              Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full bg-card" />
+              ))
+            ) : (
+              allProducts.map((product) => (
+                <ProductItem key={product.id} product={product} showActions={false} />
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>

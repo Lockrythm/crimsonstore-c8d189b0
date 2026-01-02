@@ -3,26 +3,35 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/mockData";
+import { useBookProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { useBookCategories } from "@/hooks/useCategories";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Books = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const bookCategories = categories.filter(c => 
-    ["vampiric-lore", "grimoires", "alchemy"].includes(c.slug)
-  );
-
-  const bookProducts = products.filter(p => 
-    p.status === "approved" && 
-    (p.categoryId === "1" || p.categoryId === "3" || p.categoryId === "4")
-  );
+  const { data: bookCategories = [] } = useBookCategories();
+  const { data: bookProducts = [], isLoading } = useBookProducts();
 
   const filteredBooks = bookProducts.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || p.categoryId === selectedCategory;
+    const matchesCategory = !selectedCategory || p.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
+  });
+
+  const mapProductForCard = (product: ProductWithSeller) => ({
+    id: product.id,
+    sellerId: product.seller_id,
+    sellerName: product.profiles?.username || 'Unknown',
+    categoryId: product.category_id || '',
+    title: product.title,
+    description: product.description || '',
+    price: Number(product.price),
+    imageUrl: product.image_url || '',
+    status: product.status as 'pending' | 'approved' | 'rejected',
+    createdAt: product.created_at,
   });
 
   return (
@@ -91,19 +100,25 @@ const Books = () => {
           transition={{ delay: 0.3 }}
           className="grid grid-cols-2 gap-4"
         >
-          {filteredBooks.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
+          {isLoading ? (
+            Array(4).fill(0).map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-lg bg-card" />
+            ))
+          ) : (
+            filteredBooks.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index }}
+              >
+                <ProductCard product={mapProductForCard(product)} />
+              </motion.div>
+            ))
+          )}
         </motion.div>
 
-        {filteredBooks.length === 0 && (
+        {!isLoading && filteredBooks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <p>No tomes found in the archives...</p>
           </div>

@@ -4,12 +4,34 @@ import Header from "@/components/Header";
 import SectionHeader from "@/components/SectionHeader";
 import HorizontalScroll from "@/components/HorizontalScroll";
 import ProductCard from "@/components/ProductCard";
-import { getFeaturedItems, getFeaturedBooks, getMarketplaceItems } from "@/data/mockData";
+import { useFeaturedProducts, useBookProducts, useMarketplaceProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ProductSkeleton = () => (
+  <div className="w-[160px] flex-shrink-0">
+    <Skeleton className="aspect-square rounded-lg bg-card" />
+    <Skeleton className="h-4 w-3/4 mt-2 bg-card" />
+    <Skeleton className="h-4 w-1/2 mt-1 bg-card" />
+  </div>
+);
 
 const Index = () => {
-  const featuredItems = getFeaturedItems();
-  const featuredBooks = getFeaturedBooks();
-  const marketplaceItems = getMarketplaceItems();
+  const { data: featuredItems = [], isLoading: loadingFeatured } = useFeaturedProducts();
+  const { data: featuredBooks = [], isLoading: loadingBooks } = useBookProducts();
+  const { data: marketplaceItems = [], isLoading: loadingMarketplace } = useMarketplaceProducts();
+
+  const mapProductForCard = (product: ProductWithSeller) => ({
+    id: product.id,
+    sellerId: product.seller_id,
+    sellerName: product.profiles?.username || 'Unknown',
+    categoryId: product.category_id || '',
+    title: product.title,
+    description: product.description || '',
+    price: Number(product.price),
+    imageUrl: product.image_url || '',
+    status: product.status as 'pending' | 'approved' | 'rejected',
+    createdAt: product.created_at,
+  });
 
   return (
     <AppLayout>
@@ -24,9 +46,15 @@ const Index = () => {
         >
           <SectionHeader title="Featured Items" linkTo="/marketplace" />
           <HorizontalScroll>
-            {featuredItems.map((product) => (
-              <ProductCard key={product.id} product={product} featured />
-            ))}
+            {loadingFeatured ? (
+              Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
+            ) : featuredItems.length > 0 ? (
+              featuredItems.map((product) => (
+                <ProductCard key={product.id} product={mapProductForCard(product)} featured />
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm px-4">No items yet...</p>
+            )}
           </HorizontalScroll>
         </motion.section>
 
@@ -38,9 +66,15 @@ const Index = () => {
         >
           <SectionHeader title="Featured Books" linkTo="/books" />
           <HorizontalScroll>
-            {featuredBooks.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loadingBooks ? (
+              Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
+            ) : featuredBooks.length > 0 ? (
+              featuredBooks.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={mapProductForCard(product)} />
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm px-4">No books yet...</p>
+            )}
           </HorizontalScroll>
         </motion.section>
 
@@ -65,9 +99,15 @@ const Index = () => {
             linkTo="/marketplace" 
           />
           <HorizontalScroll>
-            {marketplaceItems.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loadingMarketplace ? (
+              Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
+            ) : marketplaceItems.length > 0 ? (
+              marketplaceItems.map((product) => (
+                <ProductCard key={product.id} product={mapProductForCard(product)} />
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm px-4">No items yet...</p>
+            )}
           </HorizontalScroll>
         </motion.section>
       </div>
