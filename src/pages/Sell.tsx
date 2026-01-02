@@ -73,6 +73,11 @@ const Sell = () => {
         imageUrl = await uploadProductImage(imageFile, user.id);
       }
       
+      // Determine product type based on category
+      const selectedCat = categories.find(c => c.id === formData.category);
+      const bookSlugs = ['vampiric-lore', 'grimoires', 'alchemy', 'medical-texts'];
+      const productType = selectedCat && bookSlugs.includes(selectedCat.slug) ? 'book' : 'item';
+      
       await createProduct.mutateAsync({
         seller_id: user.id,
         category_id: formData.category,
@@ -80,6 +85,7 @@ const Sell = () => {
         description: formData.description,
         price: parseFloat(formData.price),
         image_url: imageUrl,
+        type: productType,
       });
       
       toast({

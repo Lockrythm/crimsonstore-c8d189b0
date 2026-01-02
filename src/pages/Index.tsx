@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import SectionHeader from "@/components/SectionHeader";
 import HorizontalScroll from "@/components/HorizontalScroll";
 import ProductCard from "@/components/ProductCard";
-import { useFeaturedProducts, useBookProducts, useMarketplaceProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { useFeaturedItems, useFeaturedBooks, ProductWithSeller } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ProductSkeleton = () => (
@@ -16,9 +16,8 @@ const ProductSkeleton = () => (
 );
 
 const Index = () => {
-  const { data: featuredItems = [], isLoading: loadingFeatured } = useFeaturedProducts();
-  const { data: featuredBooks = [], isLoading: loadingBooks } = useBookProducts();
-  const { data: marketplaceItems = [], isLoading: loadingMarketplace } = useMarketplaceProducts();
+  const { data: featuredItems = [], isLoading: loadingFeatured } = useFeaturedItems();
+  const { data: featuredBooks = [], isLoading: loadingBooks } = useFeaturedBooks();
 
   const mapProductForCard = (product: ProductWithSeller) => ({
     id: product.id,
@@ -69,35 +68,11 @@ const Index = () => {
             {loadingBooks ? (
               Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
             ) : featuredBooks.length > 0 ? (
-              featuredBooks.slice(0, 4).map((product) => (
+              featuredBooks.map((product) => (
                 <ProductCard key={product.id} product={mapProductForCard(product)} />
               ))
             ) : (
               <p className="text-muted-foreground text-base px-4">No books yet...</p>
-            )}
-          </HorizontalScroll>
-        </motion.section>
-
-        {/* Student Marketplace */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <SectionHeader 
-            title="Student Marketplace" 
-            subtitle="electronics, bags, accessories, stationery"
-            linkTo="/marketplace" 
-          />
-          <HorizontalScroll>
-            {loadingMarketplace ? (
-              Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
-            ) : marketplaceItems.length > 0 ? (
-              marketplaceItems.map((product) => (
-                <ProductCard key={product.id} product={mapProductForCard(product)} />
-              ))
-            ) : (
-              <p className="text-muted-foreground text-base px-4">No items yet...</p>
             )}
           </HorizontalScroll>
         </motion.section>

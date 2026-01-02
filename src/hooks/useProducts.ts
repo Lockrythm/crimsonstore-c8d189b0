@@ -5,6 +5,7 @@ import { Database } from '@/integrations/supabase/types';
 type Product = Database['public']['Tables']['products']['Row'];
 type ProductInsert = Database['public']['Tables']['products']['Insert'];
 type ProductStatus = Database['public']['Enums']['product_status'];
+type ProductType = Database['public']['Enums']['product_type'];
 
 export interface ProductWithSeller extends Product {
   profiles: {
@@ -15,6 +16,104 @@ export interface ProductWithSeller extends Product {
     slug: string;
   } | null;
 }
+
+// ===== BOOK QUERIES =====
+
+// Get all approved books
+export const useBookProducts = () => {
+  return useQuery({
+    queryKey: ['products', 'books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'book')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// Get featured books only
+export const useFeaturedBooks = (limit = 4) => {
+  return useQuery({
+    queryKey: ['products', 'featured-books', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'book')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// ===== MARKETPLACE ITEM QUERIES =====
+
+// Get all approved marketplace items (non-books)
+export const useMarketplaceProducts = () => {
+  return useQuery({
+    queryKey: ['products', 'marketplace'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'item')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// Get featured marketplace items only
+export const useFeaturedItems = (limit = 4) => {
+  return useQuery({
+    queryKey: ['products', 'featured-items', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'item')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// ===== LEGACY/GENERAL QUERIES =====
 
 export const useApprovedProducts = () => {
   return useQuery({
@@ -36,6 +135,7 @@ export const useApprovedProducts = () => {
   });
 };
 
+// Featured products (both types) - for homepage hero
 export const useFeaturedProducts = (limit = 4) => {
   return useQuery({
     queryKey: ['products', 'featured', limit],
@@ -48,58 +148,12 @@ export const useFeaturedProducts = (limit = 4) => {
           categories(name, slug)
         `)
         .eq('status', 'approved')
+        .eq('is_featured', true)
         .order('created_at', { ascending: false })
         .limit(limit);
       
       if (error) throw error;
       return data as ProductWithSeller[];
-    },
-  });
-};
-
-export const useBookProducts = () => {
-  return useQuery({
-    queryKey: ['products', 'books'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          profiles(username),
-          categories(name, slug)
-        `)
-        .eq('status', 'approved')
-        .in('categories.slug', ['vampiric-lore', 'grimoires', 'alchemy'])
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      // Filter in JS since the join filter might not work as expected
-      return (data as ProductWithSeller[]).filter(p => 
-        p.categories?.slug && ['vampiric-lore', 'grimoires', 'alchemy'].includes(p.categories.slug)
-      );
-    },
-  });
-};
-
-export const useMarketplaceProducts = () => {
-  return useQuery({
-    queryKey: ['products', 'marketplace'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          profiles(username),
-          categories(name, slug)
-        `)
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      // Filter for non-book categories
-      return (data as ProductWithSeller[]).filter(p => 
-        p.categories?.slug && ['electronics', 'accessories', 'stationery'].includes(p.categories.slug)
-      );
     },
   });
 };
@@ -187,6 +241,8 @@ export const useRejectedProducts = () => {
   });
 };
 
+// ===== MUTATIONS =====
+
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   
@@ -215,6 +271,27 @@ export const useUpdateProductStatus = () => {
       const { data, error } = await supabase
         .from('products')
         .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+};
+
+export const useUpdateProductFeatured = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, is_featured }: { id: string; is_featured: boolean }) => {
+      const { data, error } = await supabase
+        .from('products')
+        .update({ is_featured })
         .eq('id', id)
         .select()
         .single();
