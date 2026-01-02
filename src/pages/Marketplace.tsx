@@ -4,23 +4,44 @@ import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProductCard from "@/components/ProductCard";
 import CartIcon from "@/components/CartIcon";
-import { useMarketplaceProducts, ProductWithSeller } from "@/hooks/useProducts";
-import { useMarketplaceCategories } from "@/hooks/useCategories";
+import { useMarketplaceProducts, useServiceProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { useMarketplaceCategories, useServiceCategories } from "@/hooks/useCategories";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type FilterType = "all" | "products" | "services";
 
 const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<FilterType>("all");
 
   const { data: marketplaceCategories = [] } = useMarketplaceCategories();
-  const { data: marketplaceProducts = [], isLoading } = useMarketplaceProducts();
+  const { data: serviceCategories = [] } = useServiceCategories();
+  const { data: marketplaceProducts = [], isLoading: loadingProducts } = useMarketplaceProducts();
+  const { data: serviceProducts = [], isLoading: loadingServices } = useServiceProducts();
 
-  const filteredProducts = marketplaceProducts.filter(p => {
+  // Combine based on filter
+  const allItems = filterType === "products" 
+    ? marketplaceProducts 
+    : filterType === "services" 
+    ? serviceProducts 
+    : [...marketplaceProducts, ...serviceProducts];
+
+  const filteredProducts = allItems.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || p.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const isLoading = loadingProducts || loadingServices;
+
+  // Get visible categories based on filter
+  const visibleCategories = filterType === "products" 
+    ? marketplaceCategories 
+    : filterType === "services" 
+    ? serviceCategories 
+    : [...marketplaceCategories, ...serviceCategories];
 
   const mapProductForCard = (product: ProductWithSeller) => ({
     id: product.id,
@@ -34,6 +55,8 @@ const Marketplace = () => {
     status: product.status as 'pending' | 'approved' | 'rejected',
     createdAt: product.created_at,
   });
+
+  const isService = (product: ProductWithSeller) => product.type === 'service';
 
   return (
     <AppLayout>
@@ -66,6 +89,35 @@ const Marketplace = () => {
           />
         </motion.div>
 
+        {/* Type Filters */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="flex gap-2"
+        >
+          {[
+            { value: "all" as FilterType, label: "All" },
+            { value: "products" as FilterType, label: "Products" },
+            { value: "services" as FilterType, label: "Services" },
+          ].map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => {
+                setFilterType(filter.value);
+                setSelectedCategory(null);
+              }}
+              className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
+                filterType === filter.value 
+                  ? "bg-primary text-primary-foreground shadow-crimson-glow" 
+                  : "bg-card border border-border text-muted-foreground hover:border-primary"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </motion.div>
+
         {/* Category Filters */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -77,19 +129,19 @@ const Marketplace = () => {
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
               !selectedCategory 
-                ? "bg-primary text-primary-foreground shadow-crimson-glow" 
+                ? "bg-secondary text-secondary-foreground" 
                 : "bg-card border border-border text-muted-foreground hover:border-primary"
             }`}
           >
-            All
+            All Categories
           </button>
-          {marketplaceCategories.map((category) => (
+          {visibleCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
                 selectedCategory === category.id 
-                  ? "bg-primary text-primary-foreground shadow-crimson-glow" 
+                  ? "bg-secondary text-secondary-foreground" 
                   : "bg-card border border-border text-muted-foreground hover:border-primary"
               }`}
             >
@@ -117,7 +169,10 @@ const Marketplace = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 * index }}
               >
-                <ProductCard product={mapProductForCard(product)} />
+                <ProductCard 
+                  product={mapProductForCard(product)} 
+                  isService={isService(product)}
+                />
               </motion.div>
             ))
           )}

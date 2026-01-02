@@ -160,37 +160,54 @@ const Admin = () => {
     </motion.div>
   );
 
-  const ProductItem = ({ product, type }: { product: ProductWithSeller; type: 'pending' | 'approved' | 'rejected' }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="card-gothic p-4"
-    >
-      <div className="flex gap-4">
-        <img 
-          src={product.image_url || '/placeholder.svg'} 
-          alt={product.title}
-          className="w-20 h-20 rounded-lg object-cover"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium text-foreground truncate">{product.title}</h3>
-            <Badge 
-              variant={type === 'approved' ? 'default' : type === 'pending' ? 'secondary' : 'destructive'}
-              className="shrink-0"
-            >
-              {type}
-            </Badge>
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case 'book': return { label: 'Book', className: 'bg-blue-500/20 text-blue-400' };
+      case 'service': return { label: 'Service', className: 'bg-purple-500/20 text-purple-400' };
+      default: return { label: 'Item', className: 'bg-green-500/20 text-green-400' };
+    }
+  };
+
+  const ProductItem = ({ product, type }: { product: ProductWithSeller; type: 'pending' | 'approved' | 'rejected' }) => {
+    const typeBadge = getTypeBadge(product.type);
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card-gothic p-4"
+      >
+        <div className="flex gap-4">
+          <img 
+            src={product.image_url || '/placeholder.svg'} 
+            alt={product.title}
+            className="w-20 h-20 rounded-lg object-cover"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-medium text-foreground truncate">{product.title}</h3>
+              <div className="flex gap-1 shrink-0">
+                <Badge className={typeBadge.className}>
+                  {typeBadge.label}
+                </Badge>
+                <Badge 
+                  variant={type === 'approved' ? 'default' : type === 'pending' ? 'secondary' : 'destructive'}
+                >
+                  {type}
+                </Badge>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {Number(product.price) === 0 ? 'Contact for price' : `$${Number(product.price).toFixed(2)}`}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">by {product.profiles?.username || 'Unknown'}</p>
+            {product.categories && (
+              <p className="text-xs text-primary mt-1">{product.categories.name}</p>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground">${Number(product.price).toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground mt-1">by {product.profiles?.username || 'Unknown'}</p>
-          {product.categories && (
-            <p className="text-xs text-primary mt-1">{product.categories.name}</p>
-          )}
         </div>
-      </div>
-      
-      <div className="flex gap-2 mt-4">
+        
+        <div className="flex gap-2 mt-4">
         {type === 'pending' && (
           <>
             <Button 
@@ -262,9 +279,10 @@ const Admin = () => {
             </Button>
           </>
         )}
-      </div>
-    </motion.div>
-  );
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <AppLayout hideNav>

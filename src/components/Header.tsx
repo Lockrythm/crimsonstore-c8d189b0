@@ -30,7 +30,7 @@ const Header = () => {
         <h1 className="text-4xl font-gothic text-foreground crimson-text-glow tracking-wide">
           Crimson
         </h1>
-        <BatIcon size={32} className="text-primary animate-float" />
+        <BatIcon size={36} className="text-primary animate-float" />
       </motion.div>
     </header>
   );
