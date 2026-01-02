@@ -167,6 +167,26 @@ export const useAllApprovedProducts = () => {
   });
 };
 
+export const useRejectedProducts = () => {
+  return useQuery({
+    queryKey: ['products', 'rejected'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'rejected')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   
