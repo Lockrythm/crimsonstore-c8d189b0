@@ -113,6 +113,54 @@ export const useFeaturedItems = (limit = 4) => {
   });
 };
 
+// ===== SERVICE QUERIES =====
+
+// Get all approved services
+export const useServiceProducts = () => {
+  return useQuery({
+    queryKey: ['products', 'services'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'service')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// Get featured services only
+export const useFeaturedServices = (limit = 4) => {
+  return useQuery({
+    queryKey: ['products', 'featured-services', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'service')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
 // ===== LEGACY/GENERAL QUERIES =====
 
 export const useApprovedProducts = () => {

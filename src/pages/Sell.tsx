@@ -1,31 +1,54 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, DollarSign, Tag, FileText, Image } from "lucide-react";
+import { Upload, DollarSign, Tag, FileText, Image, BookOpen, Package, Wrench } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories, useBookCategories, useMarketplaceCategories, useServiceCategories } from "@/hooks/useCategories";
 import { useCreateProduct } from "@/hooks/useProducts";
 import { uploadProductImage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+type ListingType = "book" | "item" | "service";
+
+const listingTypes = [
+  { value: "book" as ListingType, label: "Book", icon: BookOpen, description: "Academic or reading material" },
+  { value: "item" as ListingType, label: "Product", icon: Package, description: "Physical goods" },
+  { value: "service" as ListingType, label: "Service", icon: Wrench, description: "Skills, help, or offerings" },
+];
+
 const Sell = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { data: categories = [] } = useCategories();
+  const { data: bookCategories = [] } = useBookCategories();
+  const { data: marketplaceCategories = [] } = useMarketplaceCategories();
+  const { data: serviceCategories = [] } = useServiceCategories();
   const createProduct = useCreateProduct();
   
+  const [listingType, setListingType] = useState<ListingType | "">("");
   const [formData, setFormData] = useState({
     title: "",
     price: "",
     category: "",
     description: "",
   });
+
+  // Get categories based on selected listing type
+  const getFilteredCategories = () => {
+    switch (listingType) {
+      case "book": return bookCategories;
+      case "item": return marketplaceCategories;
+      case "service": return serviceCategories;
+      default: return [];
+    }
+  };
+
+  const filteredCategories = getFilteredCategories();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,7 +78,18 @@ const Sell = () => {
       return;
     }
 
-    if (!formData.title || !formData.price || !formData.category || !formData.description) {
+    if (!listingType) {
+      toast({
+        title: "Select listing type",
+        description: "Please select whether you're listing a Book, Product, or Service.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Services don't require price
+    const priceRequired = listingType !== "service";
+    if (!formData.title || (priceRequired && !formData.price) || !formData.category || !formData.description) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -73,19 +107,14 @@ const Sell = () => {
         imageUrl = await uploadProductImage(imageFile, user.id);
       }
       
-      // Determine product type based on category
-      const selectedCat = categories.find(c => c.id === formData.category);
-      const bookSlugs = ['vampiric-lore', 'grimoires', 'alchemy', 'medical-texts'];
-      const productType = selectedCat && bookSlugs.includes(selectedCat.slug) ? 'book' : 'item';
-      
       await createProduct.mutateAsync({
         seller_id: user.id,
         category_id: formData.category,
         title: formData.title,
         description: formData.description,
-        price: parseFloat(formData.price),
+        price: formData.price ? parseFloat(formData.price) : 0,
         image_url: imageUrl,
-        type: productType,
+        type: listingType as "book" | "item" | "service",
       });
       
       toast({
@@ -93,6 +122,7 @@ const Sell = () => {
         description: "Your listing is pending approval from the elders.",
       });
       
+      setListingType("");
       setFormData({ title: "", price: "", category: "", description: "" });
       setImagePreview(null);
       setImageFile(null);
@@ -133,7 +163,7 @@ const Sell = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-gothic text-foreground mb-2">Sell an Item</h1>
+          <h1 className="text-3xl font-gothic text-foreground mb-2">Create Listing</h1>
           <p className="text-muted-foreground text-sm">
             List your treasures for fellow creatures of the night
           </p>
@@ -146,6 +176,46 @@ const Sell = () => {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
+          {/* Listing Type Selector */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <label className="block text-sm text-muted-foreground mb-2">
+              Listing Type *
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {listingTypes.map((type) => {
+                const IconComponent = type.icon;
+                const isSelected = listingType === type.value;
+                return (
+                  <motion.button
+                    key={type.value}
+                    type="button"
+                    onClick={() => {
+                      setListingType(type.value);
+                      setFormData({ ...formData, category: "" });
+                    }}
+                    className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-2 ${
+                      isSelected 
+                        ? "border-primary bg-primary/10 text-primary" 
+                        : "border-border bg-card text-muted-foreground hover:border-primary/50"
+                    }`}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <IconComponent size={24} />
+                    <span className="text-sm font-medium">{type.label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+            {listingType && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {listingTypes.find(t => t.value === listingType)?.description}
+              </p>
+            )}
+          </motion.div>
           {/* Image Upload */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -195,52 +265,59 @@ const Sell = () => {
             />
           </motion.div>
 
-          {/* Price */}
+          {/* Price - Optional for services */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
             <label className="block text-sm text-muted-foreground mb-2">
-              <DollarSign size={14} className="inline mr-1" /> Price
+              <DollarSign size={14} className="inline mr-1" /> Price {listingType === "service" && "(Optional)"}
             </label>
             <Input
               type="number"
-              placeholder="0.00"
+              placeholder={listingType === "service" ? "Enter price or leave empty" : "0.00"}
               min="0"
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               className="bg-card border-border focus:border-primary"
-              required
+              required={listingType !== "service"}
             />
+            {listingType === "service" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave empty for "Contact for pricing"
+              </p>
+            )}
           </motion.div>
 
-          {/* Category */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <label className="block text-sm text-muted-foreground mb-2">
-              <Tag size={14} className="inline mr-1" /> Category
-            </label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
+          {/* Category - Only show if listing type selected */}
+          {listingType && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
             >
-              <SelectTrigger className="bg-card border-border">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </motion.div>
+              <label className="block text-sm text-muted-foreground mb-2">
+                <Tag size={14} className="inline mr-1" /> Category
+              </label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+              >
+                <SelectTrigger className="bg-card border-border">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {filteredCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </motion.div>
+          )}
 
           {/* Description */}
           <motion.div

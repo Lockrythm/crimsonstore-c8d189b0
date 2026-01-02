@@ -47,3 +47,20 @@ export const useMarketplaceCategories = () => {
     },
   });
 };
+
+// Service categories (skills and offerings)
+export const useServiceCategories = () => {
+  return useQuery({
+    queryKey: ['categories', 'services'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .in('slug', ['tutoring', 'repairs', 'design', 'other-services'])
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+};

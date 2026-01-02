@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Check, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { useCart } from "@/hooks/useCart";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const ADMIN_PHONE = "03126203644";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +38,8 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
+  const isService = product?.type === 'service';
+
   const handleAddToCart = () => {
     if (!product) return;
     
@@ -54,6 +58,15 @@ const ProductDetail = () => {
     });
     
     setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const handleContactAdmin = () => {
+    if (!product) return;
+    
+    const message = encodeURIComponent(
+      `Hi! I'm interested in the service: "${product.title}" listed on Crimson. Could you help me with more details?`
+    );
+    window.open(`https://wa.me/${ADMIN_PHONE}?text=${message}`, '_blank');
   };
 
   if (isLoading) {
@@ -110,13 +123,19 @@ const ProductDetail = () => {
           transition={{ delay: 0.1 }}
           className="px-4"
         >
-          <div className="aspect-square rounded-xl overflow-hidden bg-card">
+          <div className="aspect-square rounded-xl overflow-hidden bg-card relative">
             <img
               src={product.image_url || "/placeholder.svg"}
               alt={product.title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
+            {isService && (
+              <div className="absolute top-3 left-3 bg-primary/90 text-primary-foreground text-sm px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <MessageSquare size={14} />
+                Service
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -141,9 +160,15 @@ const ProductDetail = () => {
 
           {/* Price */}
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-primary">
-              Rs {Number(product.price).toLocaleString()}
-            </span>
+            {isService && Number(product.price) === 0 ? (
+              <span className="text-xl font-semibold text-muted-foreground">
+                Contact for pricing
+              </span>
+            ) : (
+              <span className="text-3xl font-bold text-primary">
+                Rs {Number(product.price).toLocaleString()}
+              </span>
+            )}
           </div>
 
           {/* Seller */}
@@ -159,35 +184,47 @@ const ProductDetail = () => {
             </p>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Action Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="pt-4"
           >
-            <Button
-              onClick={handleAddToCart}
-              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 crimson-glow"
-              disabled={addedToCart}
-            >
-              {addedToCart ? (
-                <>
-                  <Check size={24} className="mr-2" />
-                  Added to Cart
-                </>
-              ) : (
-                <>
-                  <ShoppingCart size={24} className="mr-2" />
-                  Add to Cart
-                </>
-              )}
-            </Button>
+            {isService ? (
+              <Button
+                onClick={handleContactAdmin}
+                className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 crimson-glow"
+              >
+                <MessageSquare size={24} className="mr-2" />
+                Contact Admin
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAddToCart}
+                className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 crimson-glow"
+                disabled={addedToCart}
+              >
+                {addedToCart ? (
+                  <>
+                    <Check size={24} className="mr-2" />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={24} className="mr-2" />
+                    Add to Cart
+                  </>
+                )}
+              </Button>
+            )}
           </motion.div>
 
           {/* Notice */}
           <p className="text-sm text-muted-foreground text-center pt-2">
-            Crimson acts as a mediator. A service fee may apply.
+            {isService 
+              ? "Connect with our admin to discuss this service." 
+              : "Crimson acts as a mediator. A service fee may apply."}
           </p>
         </motion.div>
       </div>

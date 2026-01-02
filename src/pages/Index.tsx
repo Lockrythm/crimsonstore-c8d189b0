@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import SectionHeader from "@/components/SectionHeader";
 import HorizontalScroll from "@/components/HorizontalScroll";
 import ProductCard from "@/components/ProductCard";
-import { useFeaturedItems, useFeaturedBooks, ProductWithSeller } from "@/hooks/useProducts";
+import { useFeaturedItems, useFeaturedBooks, useFeaturedServices, ProductWithSeller } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ProductSkeleton = () => (
@@ -18,6 +18,7 @@ const ProductSkeleton = () => (
 const Index = () => {
   const { data: featuredItems = [], isLoading: loadingFeatured } = useFeaturedItems();
   const { data: featuredBooks = [], isLoading: loadingBooks } = useFeaturedBooks();
+  const { data: featuredServices = [], isLoading: loadingServices } = useFeaturedServices();
 
   const mapProductForCard = (product: ProductWithSeller) => ({
     id: product.id,
@@ -73,6 +74,26 @@ const Index = () => {
               ))
             ) : (
               <p className="text-muted-foreground text-base px-4">No books yet...</p>
+            )}
+          </HorizontalScroll>
+        </motion.section>
+
+        {/* Featured Services */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <SectionHeader title="Featured Services" linkTo="/marketplace" />
+          <HorizontalScroll>
+            {loadingServices ? (
+              Array(4).fill(0).map((_, i) => <ProductSkeleton key={i} />)
+            ) : featuredServices.length > 0 ? (
+              featuredServices.map((product) => (
+                <ProductCard key={product.id} product={mapProductForCard(product)} isService />
+              ))
+            ) : (
+              <p className="text-muted-foreground text-base px-4">No services yet...</p>
             )}
           </HorizontalScroll>
         </motion.section>
