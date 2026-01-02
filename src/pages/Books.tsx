@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProductCard from "@/components/ProductCard";
+import CartIcon from "@/components/CartIcon";
 import { useBookProducts, ProductWithSeller } from "@/hooks/useProducts";
 import { useBookCategories } from "@/hooks/useCategories";
 import { Input } from "@/components/ui/input";
@@ -37,13 +38,17 @@ const Books = () => {
   return (
     <AppLayout>
       <div className="p-4 space-y-4">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-gothic text-foreground"
-        >
-          Books & Grimoires
-        </motion.h1>
+        {/* Header with Cart */}
+        <div className="flex items-center justify-between">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl font-gothic text-foreground"
+          >
+            Books & Grimoires
+          </motion.h1>
+          <CartIcon />
+        </div>
 
         {/* Search */}
         <motion.div 

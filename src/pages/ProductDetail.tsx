@@ -1,0 +1,198 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { useState } from "react";
+import AppLayout from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCart } from "@/hooks/useCart";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const ProductDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const { data: product, isLoading } = useQuery({
+    queryKey: ["product", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          *,
+          profiles:seller_id (username),
+          categories:category_id (name)
+        `)
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: Number(product.price),
+      imageUrl: product.image_url || "",
+      sellerName: product.profiles?.username || "Unknown",
+    });
+    
+    setAddedToCart(true);
+    toast({
+      title: "Added to Cart",
+      description: `${product.title} has been added to your cart.`,
+    });
+    
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-8 w-24 bg-card" />
+          <Skeleton className="aspect-square w-full rounded-xl bg-card" />
+          <Skeleton className="h-8 w-3/4 bg-card" />
+          <Skeleton className="h-6 w-1/4 bg-card" />
+          <Skeleton className="h-24 w-full bg-card" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!product) {
+    return (
+      <AppLayout>
+        <div className="p-4 text-center">
+          <p className="text-muted-foreground">Product not found</p>
+          <Button onClick={() => navigate(-1)} variant="outline" className="mt-4">
+            Go Back
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
+      <div className="pb-24">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="p-4"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            Back
+          </Button>
+        </motion.div>
+
+        {/* Product Image */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="px-4"
+        >
+          <div className="aspect-square rounded-xl overflow-hidden bg-card">
+            <img
+              src={product.image_url || "/placeholder.svg"}
+              alt={product.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </motion.div>
+
+        {/* Product Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="p-4 space-y-4"
+        >
+          {/* Category Badge */}
+          {product.categories?.name && (
+            <span className="inline-block bg-primary/20 text-primary text-sm px-3 py-1 rounded-full">
+              {product.categories.name}
+            </span>
+          )}
+
+          {/* Title */}
+          <h1 className="text-2xl font-gothic text-foreground">
+            {product.title}
+          </h1>
+
+          {/* Price */}
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-bold text-primary">
+              Rs {Number(product.price).toLocaleString()}
+            </span>
+          </div>
+
+          {/* Seller */}
+          <p className="text-muted-foreground">
+            Listed by <span className="text-foreground">{product.profiles?.username || "Unknown"}</span>
+          </p>
+
+          {/* Description */}
+          <div className="pt-4 border-t border-border">
+            <h3 className="text-lg font-semibold mb-2">Description</h3>
+            <p className="text-muted-foreground leading-relaxed">
+              {product.description || "No description provided."}
+            </p>
+          </div>
+
+          {/* Add to Cart Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="pt-4"
+          >
+            <Button
+              onClick={handleAddToCart}
+              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 crimson-glow"
+              disabled={addedToCart}
+            >
+              {addedToCart ? (
+                <>
+                  <Check size={24} className="mr-2" />
+                  Added to Cart
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={24} className="mr-2" />
+                  Add to Cart
+                </>
+              )}
+            </Button>
+          </motion.div>
+
+          {/* Notice */}
+          <p className="text-sm text-muted-foreground text-center pt-2">
+            Crimson acts as a mediator. A service fee may apply.
+          </p>
+        </motion.div>
+      </div>
+    </AppLayout>
+  );
+};
+
+export default ProductDetail;

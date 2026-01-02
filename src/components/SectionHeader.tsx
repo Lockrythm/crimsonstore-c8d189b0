@@ -9,11 +9,11 @@ interface SectionHeaderProps {
 
 const SectionHeader = ({ title, subtitle, linkTo }: SectionHeaderProps) => {
   return (
-    <div className="flex items-center justify-between px-4 mb-3">
+    <div className="flex items-center justify-between px-4 mb-4">
       <div>
-        <h2 className="text-xl font-gothic text-foreground">{title}</h2>
+        <h2 className="text-2xl font-gothic text-foreground tracking-wide">{title}</h2>
         {subtitle && (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         )}
       </div>
       {linkTo && (
