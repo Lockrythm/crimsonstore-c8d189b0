@@ -4,8 +4,8 @@ import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProductCard from "@/components/ProductCard";
 import CartIcon from "@/components/CartIcon";
-import { useApprovedProducts, ProductWithSeller } from "@/hooks/useProducts";
-import { useCategories } from "@/hooks/useCategories";
+import { useMarketplaceProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { useMarketplaceCategories } from "@/hooks/useCategories";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -13,10 +13,10 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: categories = [] } = useCategories();
-  const { data: approvedProducts = [], isLoading } = useApprovedProducts();
+  const { data: marketplaceCategories = [] } = useMarketplaceCategories();
+  const { data: marketplaceProducts = [], isLoading } = useMarketplaceProducts();
 
-  const filteredProducts = approvedProducts.filter(p => {
+  const filteredProducts = marketplaceProducts.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || p.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -83,7 +83,7 @@ const Marketplace = () => {
           >
             All
           </button>
-          {categories.map((category) => (
+          {marketplaceCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
