@@ -1,70 +1,100 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Bell, Shield, Palette, HelpCircle } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, User, Bell, Shield, Palette, HelpCircle, Camera, Save } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { uploadProductImage } from "@/lib/storage";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const { user, profile, signOut } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
+  
+  // Profile editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [username, setUsername] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const settingsSections = [
-    {
-      title: "Account",
-      icon: User,
-      items: [
-        { label: "Edit Profile", action: () => {} },
-        { label: "Change Password", action: () => {} },
-        { label: "Email: " + (user?.email || "Not set"), action: () => {} },
-      ],
-    },
-    {
-      title: "Notifications",
-      icon: Bell,
-      items: [
-        { 
-          label: "Push Notifications", 
-          toggle: true, 
-          value: notifications, 
-          onChange: setNotifications 
-        },
-      ],
-    },
-    {
-      title: "Appearance",
-      icon: Palette,
-      items: [
-        { 
-          label: "Dark Mode", 
-          toggle: true, 
-          value: darkMode, 
-          onChange: setDarkMode 
-        },
-      ],
-    },
-    {
-      title: "Privacy & Security",
-      icon: Shield,
-      items: [
-        { label: "Privacy Policy", action: () => {} },
-        { label: "Terms of Service", action: () => {} },
-      ],
-    },
-    {
-      title: "Support",
-      icon: HelpCircle,
-      items: [
-        { label: "Help Center", action: () => {} },
-        { label: "Contact Support", action: () => {} },
-        { label: "Report a Problem", action: () => {} },
-      ],
-    },
-  ];
+  // Initialize form with current profile data
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.username || "");
+      setAvatarUrl(profile.avatar_url || "");
+    }
+  }, [profile]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      let newAvatarUrl = avatarUrl;
+      
+      // Upload new avatar if selected
+      if (avatarFile) {
+        newAvatarUrl = await uploadProductImage(avatarFile, user.id);
+      }
+      
+      // Update profile in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: username.trim() || null,
+          avatar_url: newAvatarUrl || null,
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Profile updated",
+        description: "Your changes have been saved.",
+      });
+      
+      setIsEditingProfile(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      
+      // Refresh the page to show updated profile
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <AppLayout>
@@ -86,46 +116,227 @@ const Settings = () => {
           <h1 className="text-2xl font-gothic text-foreground">Settings</h1>
         </motion.div>
 
-        {/* Settings Sections */}
-        {settingsSections.map((section, sectionIndex) => (
-          <motion.div
-            key={section.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * sectionIndex }}
-            className="card-gothic p-4"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <section.icon size={20} className="text-primary" />
-              <h2 className="text-lg font-gothic text-foreground">{section.title}</h2>
-            </div>
-            
-            <div className="space-y-1">
-              {section.items.map((item, itemIndex) => (
-                <div
-                  key={itemIndex}
-                  className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
-                  onClick={item.toggle ? undefined : item.action}
+        {/* Account Section with Profile Editing */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card-gothic p-4"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <User size={20} className="text-primary" />
+            <h2 className="text-lg font-gothic text-foreground">Account</h2>
+          </div>
+          
+          {isEditingProfile ? (
+            <div className="space-y-4">
+              {/* Avatar Upload */}
+              <div className="flex flex-col items-center gap-3">
+                <div 
+                  className="relative w-24 h-24 rounded-full overflow-hidden bg-secondary cursor-pointer"
+                  onClick={() => document.getElementById("avatar-upload")?.click()}
                 >
-                  <span className="text-sm text-foreground">{item.label}</span>
-                  {item.toggle && (
-                    <Switch
-                      checked={item.value}
-                      onCheckedChange={item.onChange}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  )}
+                  <img 
+                    src={avatarPreview || avatarUrl || "/placeholder.svg"} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <Camera size={24} className="text-white" />
+                  </div>
                 </div>
-              ))}
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <p className="text-xs text-muted-foreground">Tap to change avatar</p>
+              </div>
+              
+              {/* Username Input */}
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">Username</label>
+                <Input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="bg-card border-border"
+                />
+              </div>
+              
+              {/* Email (read-only) */}
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">Email</label>
+                <Input
+                  value={user?.email || ""}
+                  disabled
+                  className="bg-secondary/50 border-border text-muted-foreground"
+                />
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    setUsername(profile?.username || "");
+                    setAvatarPreview(null);
+                    setAvatarFile(null);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-primary text-primary-foreground"
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>Saving...</>
+                  ) : (
+                    <>
+                      <Save size={16} className="mr-2" />
+                      Save
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </motion.div>
-        ))}
+          ) : (
+            <div className="space-y-1">
+              <div
+                className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+                onClick={() => setIsEditingProfile(true)}
+              >
+                <span className="text-sm text-foreground">Edit Profile</span>
+              </div>
+              <div className="flex items-center justify-between py-3 px-2 rounded-lg">
+                <span className="text-sm text-foreground">Email: {user?.email || "Not set"}</span>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Notifications Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card-gothic p-4"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Bell size={20} className="text-primary" />
+            <h2 className="text-lg font-gothic text-foreground">Notifications</h2>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg">
+              <span className="text-sm text-foreground">Push Notifications</span>
+              <Switch
+                checked={notifications}
+                onCheckedChange={setNotifications}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Appearance Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="card-gothic p-4"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Palette size={20} className="text-primary" />
+            <h2 className="text-lg font-gothic text-foreground">Appearance</h2>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg">
+              <span className="text-sm text-foreground">Dark Mode</span>
+              <Switch
+                checked={darkMode}
+                onCheckedChange={setDarkMode}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Privacy & Security Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="card-gothic p-4"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Shield size={20} className="text-primary" />
+            <h2 className="text-lg font-gothic text-foreground">Privacy & Security</h2>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+              <span className="text-sm text-foreground">Privacy Policy</span>
+            </div>
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+              <span className="text-sm text-foreground">Terms of Service</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Support Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="card-gothic p-4"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <HelpCircle size={20} className="text-primary" />
+            <h2 className="text-lg font-gothic text-foreground">Support</h2>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+              <span className="text-sm text-foreground">Help Center</span>
+            </div>
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+              <span className="text-sm text-foreground">Contact Support</span>
+            </div>
+            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+              <span className="text-sm text-foreground">Report a Problem</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Sign Out Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Button 
+            variant="destructive" 
+            className="w-full"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </Button>
+        </motion.div>
 
         {/* App Version */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.7 }}
           className="text-center text-xs text-muted-foreground py-4"
         >
           Crimson Marketplace v1.0.0

@@ -119,39 +119,6 @@ export type Database = {
         }
         Relationships: []
       }
-      requests: {
-        Row: {
-          category: string | null
-          created_at: string
-          description: string | null
-          id: string
-          status: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          status?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           id: string
@@ -186,7 +153,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       product_status: "pending" | "approved" | "rejected"
-      product_type: "book" | "item" | "service"
+      product_type: "book" | "item" | "service" | "request"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -316,7 +283,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       product_status: ["pending", "approved", "rejected"],
-      product_type: ["book", "item", "service"],
+      product_type: ["book", "item", "service", "request"],
     },
   },
 } as const

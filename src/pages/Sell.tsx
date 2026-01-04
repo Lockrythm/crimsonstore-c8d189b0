@@ -1,24 +1,25 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, DollarSign, Tag, FileText, Image, BookOpen, Package, Wrench } from "lucide-react";
+import { Upload, DollarSign, Tag, FileText, Image, BookOpen, Package, Wrench, MessageSquare } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCategories, useBookCategories, useMarketplaceCategories, useServiceCategories } from "@/hooks/useCategories";
+import { useCategories, useBookCategories, useMarketplaceCategories, useServiceCategories, useRequestCategories } from "@/hooks/useCategories";
 import { useCreateProduct } from "@/hooks/useProducts";
 import { uploadProductImage } from "@/lib/storage";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
-type ListingType = "book" | "item" | "service";
+type ListingType = "book" | "item" | "service" | "request";
 
 const listingTypes = [
   { value: "book" as ListingType, label: "Book", icon: BookOpen, description: "Academic or reading material" },
   { value: "item" as ListingType, label: "Product", icon: Package, description: "Physical goods" },
   { value: "service" as ListingType, label: "Service", icon: Wrench, description: "Skills, help, or offerings" },
+  { value: "request" as ListingType, label: "Request", icon: MessageSquare, description: "Something you're looking for" },
 ];
 
 const Sell = () => {
@@ -28,6 +29,7 @@ const Sell = () => {
   const { data: bookCategories = [] } = useBookCategories();
   const { data: marketplaceCategories = [] } = useMarketplaceCategories();
   const { data: serviceCategories = [] } = useServiceCategories();
+  const { data: requestCategories = [] } = useRequestCategories();
   const createProduct = useCreateProduct();
   
   const [listingType, setListingType] = useState<ListingType | "">("");
@@ -44,6 +46,7 @@ const Sell = () => {
       case "book": return bookCategories;
       case "item": return marketplaceCategories;
       case "service": return serviceCategories;
+      case "request": return requestCategories;
       default: return [];
     }
   };
@@ -87,8 +90,8 @@ const Sell = () => {
       return;
     }
 
-    // Services don't require price
-    const priceRequired = listingType !== "service";
+    // Services and Requests don't require price
+    const priceRequired = listingType !== "service" && listingType !== "request";
     if (!formData.title || (priceRequired && !formData.price) || !formData.category || !formData.description) {
       toast({
         title: "Missing fields",
@@ -114,7 +117,7 @@ const Sell = () => {
         description: formData.description,
         price: formData.price ? parseFloat(formData.price) : 0,
         image_url: imageUrl,
-        type: listingType as "book" | "item" | "service",
+        type: listingType as "book" | "item" | "service" | "request",
       });
       
       toast({
@@ -265,28 +268,28 @@ const Sell = () => {
             />
           </motion.div>
 
-          {/* Price - Optional for services */}
+          {/* Price - Optional for services and requests */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
             <label className="block text-sm text-muted-foreground mb-2">
-              <DollarSign size={14} className="inline mr-1" /> Price {listingType === "service" && "(Optional)"}
+              <DollarSign size={14} className="inline mr-1" /> {listingType === "request" ? "Budget" : "Price"} {(listingType === "service" || listingType === "request") && "(Optional)"}
             </label>
             <Input
               type="number"
-              placeholder={listingType === "service" ? "Enter price or leave empty" : "0.00"}
+              placeholder={(listingType === "service" || listingType === "request") ? "Enter amount or leave empty" : "0.00"}
               min="0"
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               className="bg-card border-border focus:border-primary"
-              required={listingType !== "service"}
+              required={listingType !== "service" && listingType !== "request"}
             />
-            {listingType === "service" && (
+            {(listingType === "service" || listingType === "request") && (
               <p className="text-xs text-muted-foreground mt-1">
-                Leave empty for "Contact for pricing"
+                {listingType === "request" ? "Leave empty if flexible" : "Leave empty for \"Contact for pricing\""}
               </p>
             )}
           </motion.div>

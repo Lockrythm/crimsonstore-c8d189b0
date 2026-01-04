@@ -224,6 +224,75 @@ export const useFeaturedServices = (limit = 4) => {
   });
 };
 
+// ===== REQUEST QUERIES =====
+
+// Get all approved requests
+export const useRequestProducts = () => {
+  return useQuery({
+    queryKey: ['products', 'requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'request')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductWithSeller[];
+    },
+  });
+};
+
+// Get featured requests (or recent if no featured)
+export const useFeaturedRequests = (limit = 4) => {
+  return useQuery({
+    queryKey: ['products', 'featured-requests', limit],
+    queryFn: async () => {
+      // First try featured requests
+      const { data: featured, error: featuredError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'request')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (featuredError) throw featuredError;
+      
+      // If we have featured requests, return them
+      if (featured && featured.length > 0) {
+        return featured as ProductWithSeller[];
+      }
+      
+      // Otherwise, return recent approved requests
+      const { data: recent, error: recentError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'request')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (recentError) throw recentError;
+      return recent as ProductWithSeller[];
+    },
+  });
+};
+
 // ===== LEGACY/GENERAL QUERIES =====
 
 export const useApprovedProducts = () => {

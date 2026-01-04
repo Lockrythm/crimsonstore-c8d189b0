@@ -1,16 +1,17 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "@/data/mockData";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Search } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
   featured?: boolean;
   isService?: boolean;
+  isRequest?: boolean;
   onClick?: () => void;
 }
 
-const ProductCard = ({ product, featured = false, isService = false, onClick }: ProductCardProps) => {
+const ProductCard = ({ product, featured = false, isService = false, isRequest = false, onClick }: ProductCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -41,18 +42,24 @@ const ProductCard = ({ product, featured = false, isService = false, onClick }: 
             Service
           </div>
         )}
+        {isRequest && (
+          <div className="absolute top-2 left-2 bg-amber-600/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <Search size={10} />
+            Wanted
+          </div>
+        )}
       </div>
       <div className="p-3">
         <h3 className="text-base font-semibold text-foreground line-clamp-2 mb-2 leading-tight">
           {product.title}
         </h3>
-        {isService && product.price === 0 ? (
+        {(isService || isRequest) && product.price === 0 ? (
           <span className="inline-block bg-secondary/50 text-secondary-foreground font-medium text-xs px-3 py-1 rounded-full">
-            Contact for pricing
+            {isRequest ? "Flexible budget" : "Contact for pricing"}
           </span>
         ) : product.price > 0 ? (
-          <span className="inline-block bg-primary/20 text-primary font-bold text-sm px-3 py-1 rounded-full">
-            Rs {product.price.toLocaleString()}
+          <span className={`inline-block font-bold text-sm px-3 py-1 rounded-full ${isRequest ? "bg-amber-600/20 text-amber-500" : "bg-primary/20 text-primary"}`}>
+            {isRequest ? "Budget: " : ""}Rs {product.price.toLocaleString()}
           </span>
         ) : null}
         {!featured && product.sellerName && (
