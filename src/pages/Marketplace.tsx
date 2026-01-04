@@ -4,12 +4,12 @@ import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProductCard from "@/components/ProductCard";
 import CartIcon from "@/components/CartIcon";
-import { useMarketplaceProducts, useServiceProducts, ProductWithSeller } from "@/hooks/useProducts";
-import { useMarketplaceCategories, useServiceCategories } from "@/hooks/useCategories";
+import { useMarketplaceProducts, useServiceProducts, useRequestProducts, ProductWithSeller } from "@/hooks/useProducts";
+import { useMarketplaceCategories, useServiceCategories, useRequestCategories } from "@/hooks/useCategories";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type FilterType = "all" | "products" | "services";
+type FilterType = "all" | "products" | "services" | "requests";
 
 const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,15 +18,19 @@ const Marketplace = () => {
 
   const { data: marketplaceCategories = [] } = useMarketplaceCategories();
   const { data: serviceCategories = [] } = useServiceCategories();
+  const { data: requestCategories = [] } = useRequestCategories();
   const { data: marketplaceProducts = [], isLoading: loadingProducts } = useMarketplaceProducts();
   const { data: serviceProducts = [], isLoading: loadingServices } = useServiceProducts();
+  const { data: requestProducts = [], isLoading: loadingRequests } = useRequestProducts();
 
   // Combine based on filter
   const allItems = filterType === "products" 
     ? marketplaceProducts 
     : filterType === "services" 
     ? serviceProducts 
-    : [...marketplaceProducts, ...serviceProducts];
+    : filterType === "requests"
+    ? requestProducts
+    : [...marketplaceProducts, ...serviceProducts, ...requestProducts];
 
   const filteredProducts = allItems.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -34,14 +38,16 @@ const Marketplace = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const isLoading = loadingProducts || loadingServices;
+  const isLoading = loadingProducts || loadingServices || loadingRequests;
 
   // Get visible categories based on filter
   const visibleCategories = filterType === "products" 
     ? marketplaceCategories 
     : filterType === "services" 
     ? serviceCategories 
-    : [...marketplaceCategories, ...serviceCategories];
+    : filterType === "requests"
+    ? requestCategories
+    : [...marketplaceCategories, ...serviceCategories, ...requestCategories];
 
   const mapProductForCard = (product: ProductWithSeller) => ({
     id: product.id,
@@ -57,6 +63,7 @@ const Marketplace = () => {
   });
 
   const isService = (product: ProductWithSeller) => product.type === 'service';
+  const isRequest = (product: ProductWithSeller) => product.type === 'request';
 
   return (
     <AppLayout>
@@ -94,12 +101,13 @@ const Marketplace = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2"
+          className="flex gap-2 overflow-x-auto section-scroll pb-2"
         >
           {[
             { value: "all" as FilterType, label: "All" },
             { value: "products" as FilterType, label: "Products" },
             { value: "services" as FilterType, label: "Services" },
+            { value: "requests" as FilterType, label: "Requests" },
           ].map((filter) => (
             <button
               key={filter.value}
@@ -172,6 +180,7 @@ const Marketplace = () => {
                 <ProductCard 
                   product={mapProductForCard(product)} 
                   isService={isService(product)}
+                  isRequest={isRequest(product)}
                 />
               </motion.div>
             ))

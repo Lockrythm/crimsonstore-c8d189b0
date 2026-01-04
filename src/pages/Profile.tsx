@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, Settings, LogOut, Package, Shield, MessageSquare } from "lucide-react";
+import { User, Settings, LogOut, Package, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -104,23 +104,14 @@ const Profile = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 gap-3"
         >
           <Button 
             variant="outline" 
-            className="card-gothic border-border h-auto py-4 flex flex-col gap-2"
+            className="w-full card-gothic border-border h-auto py-4 flex items-center justify-center gap-3"
             onClick={() => navigate("/settings")}
           >
             <Settings size={24} className="text-muted-foreground" />
             <span className="text-sm">Settings</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="card-gothic border-border h-auto py-4 flex flex-col gap-2"
-            onClick={() => navigate("/requests")}
-          >
-            <MessageSquare size={24} className="text-muted-foreground" />
-            <span className="text-sm">Requests</span>
           </Button>
         </motion.div>
 

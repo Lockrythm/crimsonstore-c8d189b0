@@ -64,3 +64,20 @@ export const useServiceCategories = () => {
     },
   });
 };
+
+// Request categories (what people are looking for)
+export const useRequestCategories = () => {
+  return useQuery({
+    queryKey: ['categories', 'requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .in('slug', ['looking-for-books', 'looking-for-items', 'looking-for-services', 'other-requests'])
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+};
