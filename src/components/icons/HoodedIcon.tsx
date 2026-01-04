@@ -8,16 +8,24 @@ const HoodedIcon = ({ className = "", size = 24 }: HoodedIconProps) => (
     width={size}
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    fill="currentColor"
     className={className}
   >
-    <path d="M12 2C8 2 5 5 5 9v6c0 2 1 4 3 5l1 2h6l1-2c2-1 3-3 3-5V9c0-4-3-7-7-7z" />
-    <circle cx="12" cy="11" r="3" />
-    <path d="M9 8c0-1.5 1.5-3 3-3s3 1.5 3 3" />
+    {/* Hooded figure / cloak shape matching the reference - angular mystical design */}
+    <path d="M12 2L4 8V16L8 20H16L20 16V8L12 2Z" />
+    
+    {/* Inner hood/face area */}
+    <path 
+      d="M12 5L7 9V14L9 16H15L17 14V9L12 5Z" 
+      fill="black" 
+      opacity="0.4"
+    />
+    
+    {/* Center diamond/eye detail */}
+    <path 
+      d="M12 9L10 11L12 13L14 11L12 9Z" 
+      fill="currentColor"
+    />
   </svg>
 );
 
