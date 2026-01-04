@@ -1,9 +1,8 @@
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { Book, Plus } from "lucide-react";
+import { Book } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import BatIcon from "../icons/BatIcon";
-import SkullIcon from "../icons/SkullIcon";
 import HoodedIcon from "../icons/HoodedIcon";
 import BloodDropIcon from "../icons/BloodDropIcon";
 
@@ -11,8 +10,8 @@ const navItems = [
   { path: "/", icon: BatIcon, label: "Home" },
   { path: "/books", icon: Book, label: "Books" },
   { path: "/sell", icon: null, label: "Sell" },
-  { path: "/marketplace", icon: SkullIcon, label: "Marketplace" },
-  { path: "/profile", icon: HoodedIcon, label: "Profile" },
+  { path: "/marketplace", icon: BatIcon, label: "Market" },
+  { path: "/profile", icon: BatIcon, label: "Profile" },
 ];
 
 // Animation variants with proper typing
@@ -57,7 +56,7 @@ const BottomNav = () => {
       {/* Gradient border overlay */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       
-      <div className="flex items-center justify-around h-18 px-2 max-w-lg mx-auto py-2">
+      <div className="flex items-center justify-evenly h-18 px-4 max-w-lg mx-auto py-2 w-full">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isSellButton = item.label === "Sell";
@@ -105,15 +104,6 @@ const BottomNav = () => {
                     <div className="absolute inset-1 rounded-full bg-gradient-to-br from-red-500 to-primary opacity-50" />
                     
                     <BloodDropIcon size={32} className="text-primary-foreground relative z-10" />
-                    
-                    {/* Plus badge */}
-                    <motion.div 
-                      className="absolute -top-1 -right-1 w-5 h-5 bg-background rounded-full flex items-center justify-center border-2 border-primary shadow-md"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <Plus size={12} className="text-primary" strokeWidth={3} />
-                    </motion.div>
                   </div>
                 </motion.div>
               </Link>
@@ -127,9 +117,9 @@ const BottomNav = () => {
               key={item.path}
               variants={navItemVariants}
             >
-              <Link to={item.path} className="relative">
+              <Link to={item.path} className="relative flex-1 flex justify-center">
                 <motion.div
-                  className="flex flex-col items-center justify-center min-w-[56px] min-h-[56px] px-3 py-2 rounded-xl relative"
+                  className="flex flex-col items-center justify-center w-14 h-14 rounded-xl relative"
                   initial={{ scale: 1 }}
                   animate={isActive ? { 
                     scale: 1.12,

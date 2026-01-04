@@ -41,12 +41,13 @@ export const useBookProducts = () => {
   });
 };
 
-// Get featured books only
+// Get featured books (or recent if no featured)
 export const useFeaturedBooks = (limit = 4) => {
   return useQuery({
     queryKey: ['products', 'featured-books', limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try featured books
+      const { data: featured, error: featuredError } = await supabase
         .from('products')
         .select(`
           *,
@@ -59,8 +60,28 @@ export const useFeaturedBooks = (limit = 4) => {
         .order('created_at', { ascending: false })
         .limit(limit);
       
-      if (error) throw error;
-      return data as ProductWithSeller[];
+      if (featuredError) throw featuredError;
+      
+      // If we have featured books, return them
+      if (featured && featured.length > 0) {
+        return featured as ProductWithSeller[];
+      }
+      
+      // Otherwise, return recent approved books
+      const { data: recent, error: recentError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'book')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (recentError) throw recentError;
+      return recent as ProductWithSeller[];
     },
   });
 };
@@ -89,12 +110,13 @@ export const useMarketplaceProducts = () => {
   });
 };
 
-// Get featured marketplace items only
+// Get featured marketplace items (or recent if no featured)
 export const useFeaturedItems = (limit = 4) => {
   return useQuery({
     queryKey: ['products', 'featured-items', limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try featured items
+      const { data: featured, error: featuredError } = await supabase
         .from('products')
         .select(`
           *,
@@ -107,8 +129,28 @@ export const useFeaturedItems = (limit = 4) => {
         .order('created_at', { ascending: false })
         .limit(limit);
       
-      if (error) throw error;
-      return data as ProductWithSeller[];
+      if (featuredError) throw featuredError;
+      
+      // If we have featured items, return them
+      if (featured && featured.length > 0) {
+        return featured as ProductWithSeller[];
+      }
+      
+      // Otherwise, return recent approved items
+      const { data: recent, error: recentError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'item')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (recentError) throw recentError;
+      return recent as ProductWithSeller[];
     },
   });
 };
@@ -137,12 +179,13 @@ export const useServiceProducts = () => {
   });
 };
 
-// Get featured services only
+// Get featured services (or recent if no featured)
 export const useFeaturedServices = (limit = 4) => {
   return useQuery({
     queryKey: ['products', 'featured-services', limit],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First try featured services
+      const { data: featured, error: featuredError } = await supabase
         .from('products')
         .select(`
           *,
@@ -155,8 +198,28 @@ export const useFeaturedServices = (limit = 4) => {
         .order('created_at', { ascending: false })
         .limit(limit);
       
-      if (error) throw error;
-      return data as ProductWithSeller[];
+      if (featuredError) throw featuredError;
+      
+      // If we have featured services, return them
+      if (featured && featured.length > 0) {
+        return featured as ProductWithSeller[];
+      }
+      
+      // Otherwise, return recent approved services
+      const { data: recent, error: recentError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles(username),
+          categories(name, slug)
+        `)
+        .eq('status', 'approved')
+        .eq('type', 'service')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (recentError) throw recentError;
+      return recent as ProductWithSeller[];
     },
   });
 };
