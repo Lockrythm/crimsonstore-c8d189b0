@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, DollarSign, Tag, FileText, Image, BookOpen, Package, Wrench, MessageSquare } from "lucide-react";
+import { Upload, IndianRupee, Tag, FileText, Image, BookOpen, Package, Wrench, MessageSquare } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -275,13 +275,13 @@ const Sell = () => {
             transition={{ delay: 0.4 }}
           >
             <label className="block text-sm text-muted-foreground mb-2">
-              <DollarSign size={14} className="inline mr-1" /> {listingType === "request" ? "Budget" : "Price"} {(listingType === "service" || listingType === "request") && "(Optional)"}
+              <IndianRupee size={14} className="inline mr-1" /> {listingType === "request" ? "Budget" : "Price"} (₹) {(listingType === "service" || listingType === "request") && "(Optional)"}
             </label>
             <Input
               type="number"
-              placeholder={(listingType === "service" || listingType === "request") ? "Enter amount or leave empty" : "0.00"}
+              placeholder={(listingType === "service" || listingType === "request") ? "Enter amount in ₹ or leave empty" : "0"}
               min="0"
-              step="0.01"
+              step="1"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               className="bg-card border-border focus:border-primary"

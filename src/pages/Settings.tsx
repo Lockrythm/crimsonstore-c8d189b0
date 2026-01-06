@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Bell, Shield, Palette, HelpCircle, Camera, Save } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, Palette, HelpCircle, Camera, Save, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadProductImage } from "@/lib/storage";
+import { useTheme } from "@/hooks/useTheme";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, signOut } = useAuth();
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const [notifications, setNotifications] = useState(() => {
+    const stored = localStorage.getItem("crimson-notifications");
+    return stored !== null ? stored === "true" : true;
+  });
   
   // Profile editing state
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -33,6 +37,11 @@ const Settings = () => {
       setAvatarUrl(profile.avatar_url || "");
     }
   }, [profile]);
+
+  // Save notification preference
+  useEffect(() => {
+    localStorage.setItem("crimson-notifications", String(notifications));
+  }, [notifications]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,6 +103,24 @@ const Settings = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleNotificationToggle = (checked: boolean) => {
+    setNotifications(checked);
+    toast({
+      title: checked ? "Notifications enabled" : "Notifications disabled",
+      description: checked 
+        ? "You will receive push notifications." 
+        : "Push notifications have been turned off.",
+    });
+  };
+
+  const handleThemeToggle = () => {
+    toggleTheme();
+    toast({
+      title: `${theme === "dark" ? "Light" : "Dark"} mode activated`,
+      description: `Switched to ${theme === "dark" ? "light" : "dark"} theme.`,
+    });
   };
 
   return (
@@ -236,10 +263,15 @@ const Settings = () => {
           
           <div className="space-y-1">
             <div className="flex items-center justify-between py-3 px-2 rounded-lg">
-              <span className="text-sm text-foreground">Push Notifications</span>
+              <div className="flex flex-col">
+                <span className="text-sm text-foreground">Push Notifications</span>
+                <span className="text-xs text-muted-foreground">
+                  {notifications ? "You'll receive updates" : "Notifications are off"}
+                </span>
+              </div>
               <Switch
                 checked={notifications}
-                onCheckedChange={setNotifications}
+                onCheckedChange={handleNotificationToggle}
                 className="data-[state=checked]:bg-primary"
               />
             </div>
@@ -260,10 +292,22 @@ const Settings = () => {
           
           <div className="space-y-1">
             <div className="flex items-center justify-between py-3 px-2 rounded-lg">
-              <span className="text-sm text-foreground">Dark Mode</span>
+              <div className="flex items-center gap-3">
+                {theme === "dark" ? (
+                  <Moon size={18} className="text-muted-foreground" />
+                ) : (
+                  <Sun size={18} className="text-muted-foreground" />
+                )}
+                <div className="flex flex-col">
+                  <span className="text-sm text-foreground">Dark Mode</span>
+                  <span className="text-xs text-muted-foreground">
+                    {theme === "dark" ? "Currently using dark theme" : "Currently using light theme"}
+                  </span>
+                </div>
+              </div>
               <Switch
-                checked={darkMode}
-                onCheckedChange={setDarkMode}
+                checked={theme === "dark"}
+                onCheckedChange={handleThemeToggle}
                 className="data-[state=checked]:bg-primary"
               />
             </div>
@@ -283,10 +327,26 @@ const Settings = () => {
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => {
+                toast({
+                  title: "Privacy Policy",
+                  description: "Privacy policy page coming soon.",
+                });
+              }}
+            >
               <span className="text-sm text-foreground">Privacy Policy</span>
             </div>
-            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => {
+                toast({
+                  title: "Terms of Service",
+                  description: "Terms of service page coming soon.",
+                });
+              }}
+            >
               <span className="text-sm text-foreground">Terms of Service</span>
             </div>
           </div>
@@ -305,13 +365,31 @@ const Settings = () => {
           </div>
           
           <div className="space-y-1">
-            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => {
+                toast({
+                  title: "Help Center",
+                  description: "Help center coming soon.",
+                });
+              }}
+            >
               <span className="text-sm text-foreground">Help Center</span>
             </div>
-            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => {
+                window.open("https://wa.me/923126203644?text=Hi! I need help with Crimson app.", "_blank");
+              }}
+            >
               <span className="text-sm text-foreground">Contact Support</span>
             </div>
-            <div className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+              onClick={() => {
+                window.open("https://wa.me/923126203644?text=Hi! I want to report a problem with Crimson app.", "_blank");
+              }}
+            >
               <span className="text-sm text-foreground">Report a Problem</span>
             </div>
           </div>
