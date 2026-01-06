@@ -198,7 +198,7 @@ const Admin = () => {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              {Number(product.price) === 0 ? 'Contact for price' : `₹${Number(product.price).toLocaleString()}`}
+              {Number(product.price) === 0 ? 'Contact for price' : `PKR ${Number(product.price).toLocaleString()}`}
             </p>
             <p className="text-xs text-muted-foreground mt-1">by {product.profiles?.username || 'Unknown'}</p>
             {product.categories && (
@@ -286,7 +286,7 @@ const Admin = () => {
 
   return (
     <AppLayout hideNav>
-      <div className="p-4 space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -300,12 +300,12 @@ const Admin = () => {
           </Link>
           <div className="flex items-center gap-2">
             <Shield className="text-primary" size={28} />
-            <h1 className="text-2xl font-gothic text-foreground">Admin Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-gothic text-foreground">Admin Dashboard</h1>
           </div>
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <StatCard icon={Users} label="Users" value={stats.totalUsers} color="bg-primary" />
           <StatCard icon={Package} label="Products" value={stats.totalProducts} color="bg-green-600" />
           <StatCard icon={Clock} label="Pending" value={stats.pendingCount} color="bg-yellow-600" />
@@ -317,88 +317,94 @@ const Admin = () => {
           <TabsList className="grid w-full grid-cols-3 bg-card border border-border">
             <TabsTrigger 
               value="pending"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm"
             >
               Pending ({pendingProducts.length})
             </TabsTrigger>
             <TabsTrigger 
               value="inventory"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm"
             >
               Approved ({allProducts.length})
             </TabsTrigger>
             <TabsTrigger 
               value="rejected"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm"
             >
               Rejected ({rejectedProducts.length})
             </TabsTrigger>
           </TabsList>
 
           {/* Pending Items */}
-          <TabsContent value="pending" className="mt-4 space-y-3">
-            {loadingPending ? (
-              Array(3).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full bg-card" />
-              ))
-            ) : pendingProducts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12 text-muted-foreground"
-              >
-                <Clock className="mx-auto mb-3 opacity-50" size={40} />
-                <p>No items awaiting approval.</p>
-              </motion.div>
-            ) : (
-              pendingProducts.map((product) => (
-                <ProductItem key={product.id} product={product} type="pending" />
-              ))
-            )}
+          <TabsContent value="pending" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {loadingPending ? (
+                Array(3).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full bg-card" />
+                ))
+              ) : pendingProducts.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full text-center py-12 text-muted-foreground"
+                >
+                  <Clock className="mx-auto mb-3 opacity-50" size={40} />
+                  <p>No items awaiting approval.</p>
+                </motion.div>
+              ) : (
+                pendingProducts.map((product) => (
+                  <ProductItem key={product.id} product={product} type="pending" />
+                ))
+              )}
+            </div>
           </TabsContent>
 
           {/* Approved Inventory */}
-          <TabsContent value="inventory" className="mt-4 space-y-3">
-            {loadingAll ? (
-              Array(3).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full bg-card" />
-              ))
-            ) : allProducts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12 text-muted-foreground"
-              >
-                <Package className="mx-auto mb-3 opacity-50" size={40} />
-                <p>No approved products yet.</p>
-              </motion.div>
-            ) : (
-              allProducts.map((product) => (
-                <ProductItem key={product.id} product={product} type="approved" />
-              ))
-            )}
+          <TabsContent value="inventory" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {loadingAll ? (
+                Array(3).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full bg-card" />
+                ))
+              ) : allProducts.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full text-center py-12 text-muted-foreground"
+                >
+                  <Package className="mx-auto mb-3 opacity-50" size={40} />
+                  <p>No approved products yet.</p>
+                </motion.div>
+              ) : (
+                allProducts.map((product) => (
+                  <ProductItem key={product.id} product={product} type="approved" />
+                ))
+              )}
+            </div>
           </TabsContent>
 
           {/* Rejected Items */}
-          <TabsContent value="rejected" className="mt-4 space-y-3">
-            {loadingRejected ? (
-              Array(3).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full bg-card" />
-              ))
-            ) : rejectedProducts.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12 text-muted-foreground"
-              >
-                <Ban className="mx-auto mb-3 opacity-50" size={40} />
-                <p>No rejected items.</p>
-              </motion.div>
-            ) : (
-              rejectedProducts.map((product) => (
-                <ProductItem key={product.id} product={product} type="rejected" />
-              ))
-            )}
+          <TabsContent value="rejected" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {loadingRejected ? (
+                Array(3).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full bg-card" />
+                ))
+              ) : rejectedProducts.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full text-center py-12 text-muted-foreground"
+                >
+                  <Ban className="mx-auto mb-3 opacity-50" size={40} />
+                  <p>No rejected items.</p>
+                </motion.div>
+              ) : (
+                rejectedProducts.map((product) => (
+                  <ProductItem key={product.id} product={product} type="rejected" />
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
