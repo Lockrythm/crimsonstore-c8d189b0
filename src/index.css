@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Crimson Gothic Theme */
+    /* Dark Crimson Gothic Theme (Default) */
     --background: 0 0% 4%;
     --background-secondary: 0 0% 8%;
     --foreground: 0 0% 98%;
@@ -63,6 +63,62 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 20%;
     --sidebar-ring: 0 84% 50%;
+  }
+
+  /* Light Crimson Gothic Theme */
+  .light {
+    --background: 0 0% 98%;
+    --background-secondary: 0 0% 94%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --card-border: 0 0% 85%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 0 84% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 84% 45%;
+
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 0% 88%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 84% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 90%;
+    --ring: 0 84% 45%;
+
+    /* Custom Gothic Variables for Light Mode */
+    --crimson: 0 84% 45%;
+    --crimson-glow: 0 0 20px hsl(0, 84%, 45%, 0.3);
+    --crimson-glow-intense: 0 0 30px hsl(0, 84%, 45%, 0.5);
+    
+    --fog-gradient: linear-gradient(180deg, 
+      hsl(0, 0%, 96%) 0%, 
+      hsl(0, 0%, 98%) 50%, 
+      hsl(0, 0%, 100%) 100%);
+
+    --glass-bg: hsl(0, 0%, 100%, 0.9);
+    --glass-border: hsl(0, 0%, 80%, 0.5);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 0 84% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 0 84% 45%;
   }
 }
 

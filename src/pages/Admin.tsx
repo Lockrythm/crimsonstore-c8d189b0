@@ -198,7 +198,7 @@ const Admin = () => {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              {Number(product.price) === 0 ? 'Contact for price' : `$${Number(product.price).toFixed(2)}`}
+              {Number(product.price) === 0 ? 'Contact for price' : `₹${Number(product.price).toLocaleString()}`}
             </p>
             <p className="text-xs text-muted-foreground mt-1">by {product.profiles?.username || 'Unknown'}</p>
             {product.categories && (
