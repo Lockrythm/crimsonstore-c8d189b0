@@ -125,7 +125,7 @@ const Settings = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -140,7 +140,7 @@ const Settings = () => {
           >
             <ArrowLeft size={24} />
           </Button>
-          <h1 className="text-2xl font-gothic text-foreground">Settings</h1>
+          <h1 className="text-2xl md:text-3xl font-gothic text-foreground">Settings</h1>
         </motion.div>
 
         {/* Account Section with Profile Editing */}

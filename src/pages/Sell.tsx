@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, IndianRupee, Tag, FileText, Image, BookOpen, Package, Wrench, MessageSquare } from "lucide-react";
+import { Upload, Tag, FileText, Image, BookOpen, Package, Wrench, MessageSquare } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -161,13 +161,13 @@ const Sell = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl font-gothic text-foreground mb-2">Create Listing</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-3xl md:text-4xl font-gothic text-foreground mb-2">Create Listing</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             List your treasures for fellow creatures of the night
           </p>
         </motion.div>
@@ -185,10 +185,10 @@ const Sell = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <label className="block text-sm text-muted-foreground mb-2">
+            <label className="block text-sm md:text-base text-muted-foreground mb-2">
               Listing Type *
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
               {listingTypes.map((type) => {
                 const IconComponent = type.icon;
                 const isSelected = listingType === type.value;
@@ -274,12 +274,12 @@ const Sell = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <label className="block text-sm text-muted-foreground mb-2">
-              <IndianRupee size={14} className="inline mr-1" /> {listingType === "request" ? "Budget" : "Price"} (₹) {(listingType === "service" || listingType === "request") && "(Optional)"}
+            <label className="block text-sm md:text-base text-muted-foreground mb-2">
+              {listingType === "request" ? "Budget" : "Price"} (PKR) {(listingType === "service" || listingType === "request") && "(Optional)"}
             </label>
             <Input
               type="number"
-              placeholder={(listingType === "service" || listingType === "request") ? "Enter amount in ₹ or leave empty" : "0"}
+              placeholder={(listingType === "service" || listingType === "request") ? "Enter amount in PKR or leave empty" : "0"}
               min="0"
               step="1"
               value={formData.price}

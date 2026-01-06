@@ -59,7 +59,7 @@ const ProductCard = ({ product, featured = false, isService = false, isRequest =
           </span>
         ) : product.price > 0 ? (
           <span className={`inline-block font-bold text-sm px-3 py-1 rounded-full ${isRequest ? "bg-amber-600/20 text-amber-500" : "bg-primary/20 text-primary"}`}>
-            {isRequest ? "Budget: " : ""}Rs {product.price.toLocaleString()}
+            {isRequest ? "Budget: " : ""}PKR {product.price.toLocaleString()}
           </span>
         ) : null}
         {!featured && product.sellerName && (

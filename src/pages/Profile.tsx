@@ -65,7 +65,7 @@ const Profile = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -165,7 +165,7 @@ const Profile = () => {
                     <h3 className="text-sm font-medium text-foreground line-clamp-1">
                       {product.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground">${Number(product.price).toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">PKR {Number(product.price).toLocaleString()}</p>
                   </div>
                   {getStatusBadge(product.status)}
                 </motion.div>
