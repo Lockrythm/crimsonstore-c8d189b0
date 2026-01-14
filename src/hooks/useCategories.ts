@@ -23,7 +23,7 @@ export const useBookCategories = () => {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .in('slug', ['vampiric-lore', 'grimoires', 'alchemy', 'medical-texts'])
+        .in('slug', ['fiction', 'non-fiction', 'mystery', 'romance', 'science-fiction', 'fantasy', 'horror', 'biography', 'self-help', 'educational'])
         .order('name');
       
       if (error) throw error;
